@@ -1,3 +1,0 @@
-[shuup.addon]
-shuup_logging = shuup_logging
-
