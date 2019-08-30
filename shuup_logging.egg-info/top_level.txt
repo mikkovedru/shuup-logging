@@ -1,0 +1,2 @@
+shuup_logging
+shuup_logging_tests

@@ -1,0 +1,5 @@
+include README.md
+
+recursive-include shuup_logging/locale *.mo
+recursive-include shuup_logging/templates *.jinja *.txt
+recursive-include shuup_logging/static *.js *.css
