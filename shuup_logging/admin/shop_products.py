@@ -7,7 +7,6 @@
 # LICENSE file in the root directory of this source tree.
 from shuup.admin.shop_provider import get_shop
 from shuup.core.models._product_shops import ShopProductLogEntry
-
 from shuup_logging.views import BaseLogListView
 
 

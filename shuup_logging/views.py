@@ -49,7 +49,7 @@ class BaseLogListView(PicotableListView):
             filter_config=TextFilter(filter_field="identifier", placeholder=_("Filter by identifier..."))
         ),
         Column("extra", _("Extra"), ordering=7, sortable=True),
-        Column("extra_changed", _("Change in extra"), ordering=8, sortable=True, display="get_extra_change")
+        Column("extra_changed", _("Change in extra"), ordering=8, sortable=True, display="get_extra_change", raw=True)
     ]
 
     def __init__(self):
@@ -58,7 +58,6 @@ class BaseLogListView(PicotableListView):
             self.columns = [column for column in self.default_columns if column.id != "extra"]
         else:
             self.columns = self.default_columns
-
 
     def format_user(self, instance, *args, **kwargs):
         if instance.user:
@@ -78,14 +77,47 @@ class BaseLogListView(PicotableListView):
             return "-"
 
         previous_item = self.model.objects.filter(
-            pk__lt=instance.pk, identifier=instance.identifier
-        ).order_by("id").first()
+            pk__lt=instance.pk,
+            target_id=instance.target_id,
+            identifier=instance.identifier
+        ).order_by("-id").first()
+
         if previous_item and previous_item.extra:
             changes = []
-            for action, attr, value_change in diff(instance.extra, previous_item.extra):
-                changes.append(
-                    "%s %s from [%s] to [%s]." % (action.capitalize(), attr, value_change[1], value_change[0]))
-            return " | ".join(changes)
+            for action, attr, value_change in diff(previous_item.extra, instance.extra):
+
+                if isinstance(attr, list):
+                    attr = ".".join(str(v) for v in attr)
+
+                if action == "remove":
+                    changes.append(
+                        '{} <code>{}</code> <em style="color: red;">{}</em>'.format(
+                            action.capitalize(),
+                            attr,
+                            value_change,
+                        )
+                    )
+                elif action == "add":
+                    changes.append(
+                        '{} <code>{}</code> <em style="color: green;">{}</em>'.format(
+                            action.capitalize(),
+                            attr,
+                            value_change,
+                        )
+                    )
+                elif action == "change":
+                    row_fmt = (
+                        '{} <code>{}</code> from <em style="color: red;">{}</em> to <em style="color: green;">{}</em>'
+                    )
+                    changes.append(
+                        row_fmt.format(
+                            action.capitalize(),
+                            attr,
+                            value_change[0] if value_change[0] is not None else "-",
+                            value_change[1] if value_change[1] is not None else "-"
+                        )
+                    )
+            return "<br>".join(changes)
         return "-"
 
     def get_queryset(self):
