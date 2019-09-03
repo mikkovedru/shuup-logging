@@ -7,6 +7,7 @@
 # LICENSE file in the root directory of this source tree.
 from __future__ import unicode_literals
 
+from dictdiffer import diff
 from django.utils.translation import ugettext_lazy as _
 from shuup.admin.utils.picotable import (
     ChoicesFilter, Column, DateRangeFilter, TextFilter
@@ -20,6 +21,7 @@ class BaseLogListView(PicotableListView):
     model = None
     user_search_field = "user__username"
     target_search_field = None  # Define in parent class
+    hide_extra = False
 
     default_columns = [
         Column(
@@ -47,12 +49,15 @@ class BaseLogListView(PicotableListView):
             filter_config=TextFilter(filter_field="identifier", placeholder=_("Filter by identifier..."))
         ),
         Column("extra", _("Extra"), ordering=7, sortable=True),
-        Column("extra_changed", _("Change in extra"), ordering=8, sortable=True, display="get_extra_change")
+        Column("extra_changed", _("Change in extra"), ordering=8, sortable=True, display="get_extra_change", raw=True)
     ]
 
     def __init__(self):
         super(BaseLogListView, self).__init__()
-        self.columns = self.default_columns
+        if self.hide_extra:
+            self.columns = [column for column in self.default_columns if column.id != "extra"]
+        else:
+            self.columns = self.default_columns
 
     def format_user(self, instance, *args, **kwargs):
         if instance.user:
@@ -64,16 +69,55 @@ class BaseLogListView(PicotableListView):
             try:
                 return '<a href=%s target="_blank">%s</a>' % (get_model_url(instance.target), instance.target)
             except Exception as e:
-                return instance.target
+                return instance.target.pk
         return "-"
 
     def get_extra_change(self, instance, *args, **kwargs):
+        if not instance.extra:
+            return "-"
+
         previous_item = self.model.objects.filter(
-            pk__lt=instance.pk, identifier=instance.identifier
-        ).order_by("id").first()
-        if previous_item:
-            diff = set(instance.extra.items()) - set(previous_item.extra.items())
-            return str({k: value for k, value in diff})
+            pk__lt=instance.pk,
+            target_id=instance.target_id,
+            identifier=instance.identifier
+        ).order_by("-id").first()
+
+        if previous_item and previous_item.extra:
+            changes = []
+            for action, attr, value_change in diff(previous_item.extra, instance.extra):
+
+                if isinstance(attr, list):
+                    attr = ".".join(str(v) for v in attr)
+
+                if action == "remove":
+                    changes.append(
+                        '{} <code>{}</code> <em style="color: red;">{}</em>'.format(
+                            action.capitalize(),
+                            attr,
+                            value_change,
+                        )
+                    )
+                elif action == "add":
+                    changes.append(
+                        '{} <code>{}</code> <em style="color: green;">{}</em>'.format(
+                            action.capitalize(),
+                            attr,
+                            value_change,
+                        )
+                    )
+                elif action == "change":
+                    row_fmt = (
+                        '{} <code>{}</code> from <em style="color: red;">{}</em> to <em style="color: green;">{}</em>'
+                    )
+                    changes.append(
+                        row_fmt.format(
+                            action.capitalize(),
+                            attr,
+                            value_change[0] if value_change[0] is not None else "-",
+                            value_change[1] if value_change[1] is not None else "-"
+                        )
+                    )
+            return "<br>".join(changes)
         return "-"
 
     def get_queryset(self):
