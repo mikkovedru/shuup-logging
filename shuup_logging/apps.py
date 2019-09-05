@@ -13,5 +13,5 @@ class AppConfig(shuup.apps.AppConfig):
 
     def ready(self):
         from django.conf import settings
-        if settings.ENABLE_BASIC_LOGGING:
+        if settings.SHUUP_LOGGING_ENABLE_BASIC_LOGGING:
             import shuup_logging.signal_handlers  # noqa: F401
