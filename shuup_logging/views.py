@@ -22,6 +22,7 @@ class BaseLogListView(PicotableListView):
     user_search_field = "user__username"
     target_search_field = None  # Define in parent class
     hide_extra = False
+    hide_extra_changed = False
 
     default_columns = [
         Column(
@@ -54,10 +55,13 @@ class BaseLogListView(PicotableListView):
 
     def __init__(self):
         super(BaseLogListView, self).__init__()
+        self.columns = self.default_columns
         if self.hide_extra:
             self.columns = [column for column in self.default_columns if column.id != "extra"]
-        else:
-            self.columns = self.default_columns
+
+        if self.hide_extra_changed:
+            self.columns = [column for column in self.default_columns if column.id != "extra_changed"]
+
 
     def format_user(self, instance, *args, **kwargs):
         if instance.user:
