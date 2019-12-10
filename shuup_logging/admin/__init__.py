@@ -28,7 +28,6 @@ MENU_ENTRIES_URL_NAME_TO_TITLE = {
 
 class LogsModule(AdminModule):
     name = _("Logs")
-    breadcrumbs_menu_entry = MenuEntry(name, url="shuup_admin:shuup_logging.product_log")
 
     def get_urls(self):
         from shuup.admin.urls import admin_url
