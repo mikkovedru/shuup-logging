@@ -19,7 +19,7 @@ def product_post_save(sender, object, request, **kwargs):
     if isinstance(object, Product):
         # TODO: check if extra has changed from last log entry
         object.add_log_entry(
-            "Product saved at admin",
+            "Success! Product saved at admin.",
             user=request.user,
             identifier=SHUUP_LOGGING_ADMIN_SAVE_LOG_IDENTIFIER,
             kind=LogEntryKind.EDIT,
@@ -32,7 +32,7 @@ def shop_product_post_save(sender, object, request, **kwargs):
     if isinstance(object, ShopProduct):
         # TODO: check if extra has changed from last log entry
         object.add_log_entry(
-            "Shop product saved at admin",
+            "Success! Shop product saved at admin.",
             user=request.user,
             identifier=SHUUP_LOGGING_ADMIN_SAVE_LOG_IDENTIFIER,
             kind=LogEntryKind.EDIT,
@@ -45,7 +45,7 @@ def supplier_post_save(sender, object, request, **kwargs):
     if isinstance(object, Supplier):
         # TODO: check if extra has changed from last log entry
         object.add_log_entry(
-            "Supplier saved at admin",
+            "Success! Supplier saved at admin.",
             user=request.user,
             identifier=SHUUP_LOGGING_ADMIN_SAVE_LOG_IDENTIFIER,
             kind=LogEntryKind.EDIT,
